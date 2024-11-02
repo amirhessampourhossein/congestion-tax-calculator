@@ -2,10 +2,4 @@
 
 namespace CongestionTaxCalculator.Entities;
 
-public class Car : IVehicle
-{
-    public string GetVehicleType()
-    {
-        return "Car";
-    }
-}
+public class Car : Vehicle;

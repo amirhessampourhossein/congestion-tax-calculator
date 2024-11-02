@@ -1,6 +1,5 @@
 ﻿namespace CongestionTaxCalculator.Entities.Common;
 
-public interface IVehicle
+public abstract class Vehicle
 {
-    string GetVehicleType();
 }

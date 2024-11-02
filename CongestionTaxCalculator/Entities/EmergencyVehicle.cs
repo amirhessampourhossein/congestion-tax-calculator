@@ -2,4 +2,4 @@
 
 namespace CongestionTaxCalculator.Entities;
 
-public class Motorcycle : Vehicle;
+public class EmergencyVehicle : Vehicle;
