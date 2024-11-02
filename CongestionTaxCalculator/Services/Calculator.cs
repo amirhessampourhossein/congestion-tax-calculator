@@ -1,36 +1,84 @@
 ﻿using CongestionTaxCalculator.Entities.Common;
+using CongestionTaxCalculator.Exceptions;
+using CongestionTaxCalculator.Services.RulesProvider;
+using System.Data;
 
-namespace CongestionTaxCalculator;
+namespace CongestionTaxCalculator.Services;
 
 public class Calculator
 {
     private const int JulyMonthNumber = 7;
+    private const decimal MaxCongestionTaxAmount = 60m;
 
-    public int[] HolidayDays { get; init; } = null!;
+    public int[] Holidays { get; init; } = null!;
+    public ICongestionTaxRulesProvider CongestionTaxRulesProvider { get; set; } = null!;
 
-    public decimal CalculateTax(Vehicle vehicle, params DateTime[] dates)
+    public decimal CalculateTax(Vehicle vehicle, List<DateTime> dates)
     {
         if (vehicle.IsExemptVehicle())
             return 0;
 
-        var filteredDates = FilterTaxFreeDays(dates);
+        var filteredDates = FilterTollFreeDays(dates);
 
-        if (filteredDates.Length == 0)
+        if (filteredDates.Count == 0)
             return 0;
 
-        return 0;
+        var congestionTaxRules = CongestionTaxRulesProvider.GetRules();
+
+        if (congestionTaxRules is not { Count: not 0 })
+            throw new CongestionTaxRuleNotFoundException();
+
+        decimal finalTaxAmount = default;
+
+        for (int i = 0; i < dates.Count; i++)
+        {
+            CongestionTaxRule? singleChargeRule = null;
+
+            for (int j = i + 1; j < dates.Count; j++)
+            {
+                if (dates[j] - dates[i] <= TimeSpan.FromMinutes(60))
+                {
+                    var matchedRule = SearchRulesByPassageDate(congestionTaxRules, dates[j]);
+
+                    if (matchedRule.Amount > singleChargeRule?.Amount)
+                        singleChargeRule = matchedRule;
+                }
+            }
+
+            if (singleChargeRule is null)
+            {
+                var matchedRule = SearchRulesByPassageDate(congestionTaxRules, dates[i]);
+
+                finalTaxAmount += matchedRule.Amount;
+            }
+            else
+                finalTaxAmount += singleChargeRule.Amount;
+        }
+
+        return finalTaxAmount > MaxCongestionTaxAmount
+            ? MaxCongestionTaxAmount
+            : finalTaxAmount;
     }
 
-    private DateTime[] FilterTaxFreeDays(DateTime[] dates)
+    private List<DateTime> FilterTollFreeDays(List<DateTime> dates)
     {
         var filteredDates = dates
             .Where(d =>
                 d.Month == JulyMonthNumber ||
                 d.DayOfWeek.IsWeekend() ||
-                HolidayDays.Contains(d.DayOfYear))
-            .ToArray();
+                Holidays.Contains(d.DayOfYear))
+            .ToList();
 
         return filteredDates;
+    }
+
+    private static CongestionTaxRule SearchRulesByPassageDate(List<CongestionTaxRule> rules, DateTime date)
+    {
+        var matchedRule = rules
+            .SingleOrDefault(r => TimeOnly.FromDateTime(date).IsBetween(r.StartTime, r.FinishTime))
+            ?? throw new CongestionTaxRuleNotFoundException();
+
+        return matchedRule;
     }
 }
 
