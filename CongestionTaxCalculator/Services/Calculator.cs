@@ -23,7 +23,7 @@ public class Calculator(
 
         dates = FilterTollFreeDays(dates);
 
-        if (dates.Length == 0)
+         if (dates.Length == 0)
             return 0;
 
         var congestionTaxRules = congestionTaxRulesProvider.GetRules();
@@ -38,11 +38,14 @@ public class Calculator(
         for (int i = 0; i < dates.Length; i++)
         {
             var chargeRule = SearchRulesByPassageDate(congestionTaxRules, dates[i]);
+            int lastIndexWithinHour = i;
 
             for (int j = i + 1; j < dates.Length; j++)
             {
                 if (dates[j] - dates[i] <= TimeSpan.FromMinutes(60))
                 {
+                    lastIndexWithinHour = j;
+
                     var matchedRule = SearchRulesByPassageDate(congestionTaxRules, dates[j]);
 
                     if (matchedRule.Amount > chargeRule.Amount)
@@ -51,26 +54,30 @@ public class Calculator(
                 else break;
             }
 
+            i = lastIndexWithinHour;
+
             if (dates[i].DayOfYear != currentDay)
             {
-                finalTaxAmount += finalTaxAmountForCurrentDay > MaxCongestionTaxAmount
-                    ? MaxCongestionTaxAmount
-                    : finalTaxAmountForCurrentDay;
-
-                dbContext.TaxRecords.Add(new()
-                {
-                    PassageDate = dates[i],
-                    TaxAmount = finalTaxAmount,
-                    VehicleId = vehicle.Id
-                });
-
-                finalTaxAmountForCurrentDay = chargeRule.Amount;
-
                 currentDay = dates[i].DayOfYear;
+                finalTaxAmount += finalTaxAmountForCurrentDay;
+                finalTaxAmountForCurrentDay = chargeRule.Amount;
             }
             else
+            {
                 finalTaxAmountForCurrentDay += chargeRule.Amount;
+                if (finalTaxAmountForCurrentDay > MaxCongestionTaxAmount)
+                    finalTaxAmountForCurrentDay = MaxCongestionTaxAmount;
+            }
         }
+
+        finalTaxAmount += finalTaxAmountForCurrentDay;
+
+        dbContext.TaxRecords.Add(new()
+        {
+            PassageDates = string.Join(",", dates),
+            VehicleId = vehicle.Id,
+            TotalTax = finalTaxAmount
+        });
 
         dbContext.SaveChanges();
 

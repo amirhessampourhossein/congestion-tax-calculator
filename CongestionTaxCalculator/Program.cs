@@ -61,7 +61,7 @@ internal class Program
             .AddDbContext<AppDbContext>(options => options.UseSqlite($"Data Source=congestion-tax.db"))
             .AddSingleton<ICongestionTaxRulesProvider, GothenburgCongestionTaxRulesProvider>()
             .AddSingleton<SwedenPublicHoliday>()
-            .AddSingleton<Calculator>()
+            .AddScoped<Calculator>()
             .BuildServiceProvider();
 
         return serviceProvider;
@@ -95,12 +95,6 @@ internal class Program
             .AsNoTracking()
             .Include(v => v.TaxRecords)
             .ToList();
-
-        foreach (var vehicle in vehicles)
-        {
-            var totalTaxAmount = vehicle.TaxRecords.Sum(r => r.TaxAmount);
-            Console.WriteLine($"Total tax amount for vehicle '{vehicle.Id}' is {totalTaxAmount} SEK");
-        }
 
         vehicles.Dump();
 
@@ -145,7 +139,7 @@ internal class Program
             return;
         }
 
-        Console.Write("\nEnter passage dates (csv): ");
+        Console.Write("Enter passage dates (csv): ");
 
         DateTime[] passageDates;
         try
