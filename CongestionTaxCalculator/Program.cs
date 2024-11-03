@@ -160,7 +160,15 @@ internal class Program
             return;
         }
 
-        calculator.CalculateTax(vehicle, passageDates);
+        try
+        {
+            calculator.CalculateTax(vehicle, passageDates);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return;
+        }
 
         Console.WriteLine("\n\nFinished...");
     }
