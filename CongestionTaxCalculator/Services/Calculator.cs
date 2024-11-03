@@ -32,7 +32,7 @@ public class Calculator(
             throw new CongestionTaxRuleNotFoundException();
 
         decimal finalTaxAmount = default;
-        decimal finalTaxAmountForCurrentDay = default;
+        decimal dailyTaxAmount = default;
         var currentDay = dates[0].DayOfYear;
 
         for (int i = 0; i < dates.Length; i++)
@@ -59,18 +59,18 @@ public class Calculator(
             if (dates[i].DayOfYear != currentDay)
             {
                 currentDay = dates[i].DayOfYear;
-                finalTaxAmount += finalTaxAmountForCurrentDay;
-                finalTaxAmountForCurrentDay = chargeRule.Amount;
+                finalTaxAmount += dailyTaxAmount;
+                dailyTaxAmount = chargeRule.Amount;
             }
             else
             {
-                finalTaxAmountForCurrentDay += chargeRule.Amount;
-                if (finalTaxAmountForCurrentDay > MaxCongestionTaxAmount)
-                    finalTaxAmountForCurrentDay = MaxCongestionTaxAmount;
+                dailyTaxAmount += chargeRule.Amount;
+                if (dailyTaxAmount > MaxCongestionTaxAmount)
+                    dailyTaxAmount = MaxCongestionTaxAmount;
             }
         }
 
-        finalTaxAmount += finalTaxAmountForCurrentDay;
+        finalTaxAmount += dailyTaxAmount;
 
         dbContext.TaxRecords.Add(new()
         {
