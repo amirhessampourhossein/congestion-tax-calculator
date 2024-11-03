@@ -33,13 +33,7 @@ internal class Program
                 case ConsoleKey.D1:
                 case ConsoleKey.NumPad1:
 
-                    Console.WriteLine();
-                    dbContext.Vehicles
-                        .AsNoTracking()
-                        .Include(v => v.TaxRecords)
-                        .ToList()
-                        .Dump();
-                    Console.ReadKey();
+                    ShowAllTaxRecords(dbContext);
 
                     break;
                 case ConsoleKey.D2:
@@ -59,6 +53,26 @@ internal class Program
 
             Console.Clear();
         }
+    }
+
+    private static void ShowAllTaxRecords(AppDbContext dbContext)
+    {
+        Console.WriteLine();
+
+        var vehicles = dbContext.Vehicles
+            .AsNoTracking()
+            .Include(v => v.TaxRecords)
+            .ToList();
+
+        foreach (var vehicle in vehicles)
+        {
+            var totalTaxAmount = vehicle.TaxRecords.Sum(r => r.TaxAmount);
+            Console.WriteLine($"Total tax amount for vehicle '{vehicle.Id}' is {totalTaxAmount}");
+        }
+
+        vehicles.Dump();
+
+        Console.ReadKey();
     }
 
     private static void AddNewVehicle(AppDbContext dbContext)
