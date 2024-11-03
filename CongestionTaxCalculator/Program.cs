@@ -25,7 +25,7 @@ internal class Program
 
         while (true)
         {
-            DisplayMainMenu();
+            ShowMainMenu();
             var selection = Console.ReadKey();
 
             switch (selection.Key)
@@ -71,7 +71,7 @@ internal class Program
         return serviceProvider;
     }
 
-    private static void DisplayMainMenu()
+    private static void ShowMainMenu()
     {
         Console.WriteLine("1.Show all tax records");
         Console.WriteLine("2.Add a vehicle");
@@ -79,7 +79,7 @@ internal class Program
         Console.Write("\nSelect: ");
     }
 
-    private static void DisplayVehicleTypeMenu()
+    private static void ShowVehicleTypeMenu()
     {
         Console.WriteLine("1.Car");
         Console.WriteLine("2.Motorcycle");
@@ -104,29 +104,29 @@ internal class Program
     private static void AddNewVehicle(AppDbContext dbContext)
     {
         Console.Clear();
-        DisplayVehicleTypeMenu();
-        var vehicleTypeSelection = Console.ReadKey().KeyChar.ToString();
+        ShowVehicleTypeMenu();
 
-        if (!Enum.TryParse<VehicleType>(vehicleTypeSelection, out var vehicleType))
+        if (!Enum.TryParse<VehicleType>(
+            Console.ReadKey().KeyChar.ToString(),
+            out var vehicleType))
         {
             Console.WriteLine("Invalid vehicle type!");
             return;
         }
 
-        var vehicle = new Vehicle
+        var vehicleEntry = dbContext.Vehicles.Add(new()
         {
             Type = vehicleType,
-        };
-
-        dbContext.Vehicles.Add(vehicle);
+        });
         dbContext.SaveChanges();
 
-        Console.WriteLine($"\n\nAdded successfully with id : {vehicle.Id}");
+        Console.WriteLine($"\n\nAdded successfully with id : {vehicleEntry.Entity.Id}");
     }
 
     private static void AddNewTaxRecord(AppDbContext dbContext, Calculator calculator)
     {
         Console.Clear();
+
         Console.Write("Enter vehicle id: ");
         if (!Guid.TryParse(Console.ReadLine(), out var vehicleId))
         {
@@ -143,6 +143,7 @@ internal class Program
 
         Console.Write("Enter passage dates (csv): ");
         var datesCsv = Console.ReadLine();
+
         DateTime[] passageDates;
         try
         {
