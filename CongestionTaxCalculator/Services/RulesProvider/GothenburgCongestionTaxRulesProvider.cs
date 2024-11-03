@@ -19,7 +19,7 @@ public class GothenburgCongestionTaxRulesProvider : ICongestionTaxRulesProvider
         }
         catch (Exception ex)
         {
-            throw new CongestionTaxRulesProviderException(ex);
+            throw new RulesProviderException(ex);
         }
     }
 }

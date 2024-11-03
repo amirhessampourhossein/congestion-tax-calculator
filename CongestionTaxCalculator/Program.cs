@@ -65,7 +65,7 @@ internal class Program
             .AddDbContext<AppDbContext>(options => options.UseSqlite($"Data Source=congestion-tax.db"))
             .AddSingleton<ICongestionTaxRulesProvider, GothenburgCongestionTaxRulesProvider>()
             .AddSingleton<SwedenPublicHoliday>()
-            .AddScoped<Calculator>()
+            .AddSingleton<Calculator>()
             .BuildServiceProvider();
 
         return serviceProvider;
@@ -128,16 +128,13 @@ internal class Program
     {
         Console.Clear();
         Console.Write("Enter vehicle id: ");
-        var vehicleId = Console.ReadLine();
-
-        if (!Guid.TryParse(vehicleId, out var vehicleIdAsGuid))
+        if (!Guid.TryParse(Console.ReadLine(), out var vehicleId))
         {
             Console.WriteLine("Invalid vehicle id...");
             return;
         }
 
-        var vehicle = dbContext.Vehicles.Find(vehicleIdAsGuid);
-
+        var vehicle = dbContext.Vehicles.Find(vehicleId);
         if (vehicle is null)
         {
             Console.WriteLine("Not Found...");
@@ -145,11 +142,11 @@ internal class Program
         }
 
         Console.Write("Enter passage dates (csv): ");
-
+        var datesCsv = Console.ReadLine();
         DateTime[] passageDates;
         try
         {
-            passageDates = [.. Console.ReadLine()!
+            passageDates = [.. datesCsv!
                 .Split(',')
                 .Select(DateTime.Parse)
                 .Order()];
@@ -162,7 +159,16 @@ internal class Program
 
         try
         {
-            calculator.CalculateTax(vehicle, passageDates);
+            var result = calculator.Calculate(vehicle, passageDates);
+
+            dbContext.TaxRecords.Add(new()
+            {
+                RecordDate = DateTime.UtcNow,
+                PassageDates = datesCsv,
+                TotalTax = result,
+                VehicleId = vehicleId
+            });
+            dbContext.SaveChanges();
         }
         catch (Exception ex)
         {

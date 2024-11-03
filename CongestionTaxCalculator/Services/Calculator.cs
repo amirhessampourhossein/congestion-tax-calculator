@@ -1,5 +1,4 @@
-﻿using CongestionTaxCalculator.Data;
-using CongestionTaxCalculator.Entities;
+﻿using CongestionTaxCalculator.Entities;
 using CongestionTaxCalculator.Exceptions;
 using CongestionTaxCalculator.Services.RulesProvider;
 using PublicHoliday;
@@ -8,15 +7,14 @@ using System.Data;
 namespace CongestionTaxCalculator.Services;
 
 public class Calculator(
-    AppDbContext dbContext,
     ICongestionTaxRulesProvider congestionTaxRulesProvider,
     SwedenPublicHoliday swedenPublicHoliday)
 {
     private const int Year = 2013;
     private const int JulyMonthNumber = 7;
-    private const decimal MaxCongestionTaxAmount = 60m;
+    private const decimal MaxDailyTaxAmount = 60m;
 
-    public decimal CalculateTax(Vehicle vehicle, DateTime[] dates)
+    public decimal Calculate(Vehicle vehicle, DateTime[] dates)
     {
         if (vehicle.IsTaxExmept())
             return 0;
@@ -29,7 +27,7 @@ public class Calculator(
         var congestionTaxRules = congestionTaxRulesProvider.GetRules();
 
         if (congestionTaxRules is not { Count: not 0 })
-            throw new CongestionTaxRuleNotFoundException();
+            throw new RuleNotFoundException();
 
         decimal finalTaxAmount = default;
         decimal dailyTaxAmount = default;
@@ -58,18 +56,9 @@ public class Calculator(
                 dailyTaxAmount = chargeRule.Amount;
             }
             else
-                dailyTaxAmount = Math.Min(dailyTaxAmount + chargeRule.Amount, MaxCongestionTaxAmount);
+                dailyTaxAmount = Math.Min(dailyTaxAmount + chargeRule.Amount, MaxDailyTaxAmount);
         }
         finalTaxAmount += dailyTaxAmount;
-
-        dbContext.TaxRecords.Add(new()
-        {
-            PassageDates = string.Join(",", dates),
-            VehicleId = vehicle.Id,
-            TotalTax = finalTaxAmount,
-            RecordDate = DateTime.UtcNow
-        });
-        dbContext.SaveChanges();
 
         return finalTaxAmount;
     }
@@ -109,7 +98,7 @@ public class Calculator(
     {
         var matchedRule = rules
             .SingleOrDefault(r => TimeOnly.FromDateTime(date).IsBetweenInclusive(r.StartTime, r.FinishTime))
-            ?? throw new CongestionTaxRuleNotFoundException();
+            ?? throw new RuleNotFoundException();
 
         return matchedRule;
     }
