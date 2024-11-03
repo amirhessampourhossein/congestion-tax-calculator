@@ -1,21 +1,24 @@
-﻿using CongestionTaxCalculator.Entities.Common;
+﻿using CongestionTaxCalculator.Data;
+using CongestionTaxCalculator.Entities;
 using CongestionTaxCalculator.Exceptions;
 using CongestionTaxCalculator.Services.RulesProvider;
+using PublicHoliday;
 using System.Data;
 
 namespace CongestionTaxCalculator.Services;
 
-public class Calculator
+public class Calculator(
+    AppDbContext dbContext,
+    ICongestionTaxRulesProvider congestionTaxRulesProvider,
+    SwedenPublicHoliday swedenPublicHoliday)
 {
+    private const int Year = 2013;
     private const int JulyMonthNumber = 7;
     private const decimal MaxCongestionTaxAmount = 60m;
 
-    public int[] Holidays { get; init; } = null!;
-    public ICongestionTaxRulesProvider CongestionTaxRulesProvider { get; init; } = null!;
-
     public decimal CalculateTax(Vehicle vehicle, DateTime[] dates)
     {
-        if (vehicle.IsExemptVehicle())
+        if (vehicle.IsTaxExmept())
             return 0;
 
         dates = FilterTollFreeDays(dates);
@@ -23,7 +26,7 @@ public class Calculator
         if (dates.Length == 0)
             return 0;
 
-        var congestionTaxRules = CongestionTaxRulesProvider.GetRules();
+        var congestionTaxRules = congestionTaxRulesProvider.GetRules();
 
         if (congestionTaxRules is not { Count: not 0 })
             throw new CongestionTaxRuleNotFoundException();
@@ -54,6 +57,13 @@ public class Calculator
                     ? MaxCongestionTaxAmount
                     : finalTaxAmountForCurrentDay;
 
+                dbContext.TaxRecords.Add(new()
+                {
+                    PassageDate = dates[i],
+                    TaxAmount = finalTaxAmount,
+                    VehicleId = vehicle.Id
+                });
+
                 finalTaxAmountForCurrentDay = chargeRule.Amount;
 
                 currentDay = dates[i].DayOfYear;
@@ -62,22 +72,43 @@ public class Calculator
                 finalTaxAmountForCurrentDay += chargeRule.Amount;
         }
 
+        dbContext.SaveChanges();
+
         return finalTaxAmount;
     }
 
     private DateTime[] FilterTollFreeDays(DateTime[] dates)
     {
+        var freeDays = GetTollFreeDays();
+
         var filteredDates = dates
             .Where(d =>
                 d.Month != JulyMonthNumber &&
                 !d.DayOfWeek.IsWeekend() &&
-                !Holidays.Contains(d.DayOfYear))
+                !freeDays.Contains(d.DayOfYear))
             .ToArray();
 
         return filteredDates;
     }
 
-    private static CongestionTaxRule SearchRulesByPassageDate(List<CongestionTaxRule> rules, DateTime date)
+    private int[] GetTollFreeDays()
+    {
+        return swedenPublicHoliday
+            .PublicHolidays(Year)
+            .SelectMany(d =>
+            new int[]
+            {
+                d.DayOfYear - 1,
+                d.DayOfYear,
+            })
+            .Where(d => d != 0)
+            .Distinct()
+            .ToArray();
+    }
+
+    private static CongestionTaxRule SearchRulesByPassageDate(
+        List<CongestionTaxRule> rules,
+        DateTime date)
     {
         var matchedRule = rules
             .SingleOrDefault(r => TimeOnly.FromDateTime(date).IsBetweenInclusive(r.StartTime, r.FinishTime))
