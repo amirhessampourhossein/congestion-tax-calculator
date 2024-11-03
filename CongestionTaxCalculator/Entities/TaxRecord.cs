@@ -7,4 +7,5 @@ public class TaxRecord
     public Guid VehicleId { get; set; }
     public string PassageDates { get; set; } = null!;
     public decimal TotalTax { get; set; }
+    public DateTime RecordDate { get; set; }
 }

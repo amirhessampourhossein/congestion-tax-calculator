@@ -66,7 +66,8 @@ public class Calculator(
         {
             PassageDates = string.Join(",", dates),
             VehicleId = vehicle.Id,
-            TotalTax = finalTaxAmount
+            TotalTax = finalTaxAmount,
+            RecordDate = DateTime.UtcNow
         });
         dbContext.SaveChanges();
 
