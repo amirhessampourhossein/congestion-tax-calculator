@@ -55,6 +55,38 @@ internal class Program
         }
     }
 
+    private static ServiceProvider BuildServiceProvider()
+    {
+        var serviceProvider = new ServiceCollection()
+            .AddDbContext<AppDbContext>(options => options.UseSqlite($"Data Source=congestion-tax.db"))
+            .AddSingleton<ICongestionTaxRulesProvider, GothenburgCongestionTaxRulesProvider>()
+            .AddSingleton<SwedenPublicHoliday>()
+            .AddSingleton<Calculator>()
+            .BuildServiceProvider();
+
+        return serviceProvider;
+    }
+
+    private static void DisplayMainMenu()
+    {
+        Console.WriteLine("1.Show all tax records");
+        Console.WriteLine("2.Add a vehicle");
+        Console.WriteLine("3.Calculate tax");
+        Console.Write("\nSelect: ");
+    }
+
+    private static void DisplayVehicleTypeMenu()
+    {
+        Console.WriteLine("1.Car");
+        Console.WriteLine("2.Motorcycle");
+        Console.WriteLine("3.Bus");
+        Console.WriteLine("4.Diplomat");
+        Console.WriteLine("4.Emergency");
+        Console.WriteLine("4.Foregin");
+        Console.WriteLine("5.Military");
+        Console.Write("\nSelect: ");
+    }
+
     private static void ShowAllTaxRecords(AppDbContext dbContext)
     {
         Console.WriteLine();
@@ -67,7 +99,7 @@ internal class Program
         foreach (var vehicle in vehicles)
         {
             var totalTaxAmount = vehicle.TaxRecords.Sum(r => r.TaxAmount);
-            Console.WriteLine($"Total tax amount for vehicle '{vehicle.Id}' is {totalTaxAmount}");
+            Console.WriteLine($"Total tax amount for vehicle '{vehicle.Id}' is {totalTaxAmount} SEK");
         }
 
         vehicles.Dump();
@@ -133,38 +165,6 @@ internal class Program
 
         Console.WriteLine("\n\nFinished...");
         Console.ReadKey();
-    }
-
-    private static ServiceProvider BuildServiceProvider()
-    {
-        var serviceProvider = new ServiceCollection()
-            .AddDbContext<AppDbContext>(options => options.UseSqlite($"Data Source=congestion-tax.db"))
-            .AddSingleton<ICongestionTaxRulesProvider, GothenburgCongestionTaxRulesProvider>()
-            .AddSingleton<SwedenPublicHoliday>()
-            .AddSingleton<Calculator>()
-            .BuildServiceProvider();
-
-        return serviceProvider;
-    }
-
-    private static void DisplayMainMenu()
-    {
-        Console.WriteLine("1.Show all tax records");
-        Console.WriteLine("2.Add a vehicle");
-        Console.WriteLine("3.Congestion tax");
-        Console.Write("\nSelect: ");
-    }
-
-    private static void DisplayVehicleTypeMenu()
-    {
-        Console.WriteLine("1.Car");
-        Console.WriteLine("2.Motorcycle");
-        Console.WriteLine("3.Bus");
-        Console.WriteLine("4.Diplomat");
-        Console.WriteLine("4.Emergency");
-        Console.WriteLine("4.Foregin");
-        Console.WriteLine("5.Military");
-        Console.Write("\nSelect: ");
     }
 }
 
