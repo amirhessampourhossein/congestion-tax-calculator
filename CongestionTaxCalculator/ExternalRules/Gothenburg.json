@@ -1,52 +1,52 @@
 [
     {
-        "in": "06:00",
-        "out": "06:29",
+        "startTime": "06:00",
+        "finishTime": "06:29",
         "amount": 8
     },
     {
-        "in": "06:30",
-        "out": "06:59",
+        "startTime": "06:30",
+        "finishTime": "06:59",
         "amount": 13
     },
     {
-        "in": "07:00",
-        "out": "07:59",
+        "startTime": "07:00",
+        "finishTime": "07:59",
         "amount": 18
     },
     {
-        "in": "08:00",
-        "out": "08:29",
+        "startTime": "08:00",
+        "finishTime": "08:29",
         "amount": 13
     },
     {
-        "in": "08:30",
-        "out": "14:59",
+        "startTime": "08:30",
+        "finishTime": "14:59",
         "amount": 8
     },
     {
-        "in": "15:00",
-        "out": "15:29",
+        "startTime": "15:00",
+        "finishTime": "15:29",
         "amount": 13
     },
     {
-        "in": "15:30",
-        "out": "16:59",
+        "startTime": "15:30",
+        "finishTime": "16:59",
         "amount": 18
     },
     {
-        "in": "17:00",
-        "out": "17:59",
+        "startTime": "17:00",
+        "finishTime": "17:59",
         "amount": 13
     },
     {
-        "in": "18:00",
-        "out": "18:29",
+        "startTime": "18:00",
+        "finishTime": "18:29",
         "amount": 8
     },
     {
-        "in": "18:30",
-        "out": "05:29",
+        "startTime": "18:30",
+        "finishTime": "05:29",
         "amount": 0
     }
 ]

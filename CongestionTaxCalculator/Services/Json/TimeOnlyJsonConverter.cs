@@ -13,9 +13,7 @@ public class TimeOnlyJsonConverter : JsonConverter<TimeOnly>
         bool hasExistingValue,
         JsonSerializer serializer)
     {
-        var timeString = reader.Value?.ToString()!;
-        var timeOnly = TimeOnly.ParseExact(timeString, TimeFormat);
-        return timeOnly;
+        return TimeOnly.ParseExact(reader.Value?.ToString()!, TimeFormat);
     }
 
     public override void WriteJson(
