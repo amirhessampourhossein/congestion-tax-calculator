@@ -38,22 +38,17 @@ public class Calculator(
         for (int i = 0; i < dates.Length; i++)
         {
             var chargeRule = SearchRulesByPassageDate(congestionTaxRules, dates[i]);
+
             int lastIndexWithinHour = i;
-
-            for (int j = i + 1; j < dates.Length; j++)
+            for (int j = i + 1; j < dates.Length && dates[j] - dates[i] <= TimeSpan.FromMinutes(60); j++)
             {
-                if (dates[j] - dates[i] <= TimeSpan.FromMinutes(60))
-                {
-                    lastIndexWithinHour = j;
+                lastIndexWithinHour = j;
 
-                    var matchedRule = SearchRulesByPassageDate(congestionTaxRules, dates[j]);
+                var matchedRule = SearchRulesByPassageDate(congestionTaxRules, dates[j]);
 
-                    if (matchedRule.Amount > chargeRule.Amount)
-                        chargeRule = matchedRule;
-                }
-                else break;
+                if (matchedRule.Amount > chargeRule.Amount)
+                    chargeRule = matchedRule;
             }
-
             i = lastIndexWithinHour;
 
             if (dates[i].DayOfYear != currentDay)
@@ -63,13 +58,8 @@ public class Calculator(
                 dailyTaxAmount = chargeRule.Amount;
             }
             else
-            {
-                dailyTaxAmount += chargeRule.Amount;
-                if (dailyTaxAmount > MaxCongestionTaxAmount)
-                    dailyTaxAmount = MaxCongestionTaxAmount;
-            }
+                dailyTaxAmount = Math.Min(dailyTaxAmount + chargeRule.Amount, MaxCongestionTaxAmount);
         }
-
         finalTaxAmount += dailyTaxAmount;
 
         dbContext.TaxRecords.Add(new()
@@ -78,7 +68,6 @@ public class Calculator(
             VehicleId = vehicle.Id,
             TotalTax = finalTaxAmount
         });
-
         dbContext.SaveChanges();
 
         return finalTaxAmount;
