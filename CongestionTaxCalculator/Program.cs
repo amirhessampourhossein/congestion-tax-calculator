@@ -33,19 +33,23 @@ internal class Program
                 case ConsoleKey.D1:
                 case ConsoleKey.NumPad1:
 
+                    Console.WriteLine();
                     ShowAllTaxRecords(dbContext);
+                    Console.ReadKey();
 
                     break;
                 case ConsoleKey.D2:
                 case ConsoleKey.NumPad2:
 
                     AddNewVehicle(dbContext);
+                    Console.ReadKey();
 
                     break;
                 case ConsoleKey.D3:
                 case ConsoleKey.NumPad3:
 
                     AddNewTaxRecord(dbContext, calculator);
+                    Console.ReadKey();
 
                     break;
                 default: break;
@@ -89,24 +93,20 @@ internal class Program
 
     private static void ShowAllTaxRecords(AppDbContext dbContext)
     {
-        Console.WriteLine();
-
         var vehicles = dbContext.Vehicles
             .AsNoTracking()
             .Include(v => v.TaxRecords)
             .ToList();
 
         vehicles.Dump();
-
-        Console.ReadKey();
     }
 
     private static void AddNewVehicle(AppDbContext dbContext)
     {
         Console.Clear();
         DisplayVehicleTypeMenu();
-
         var vehicleTypeSelection = Console.ReadKey().KeyChar.ToString();
+
         if (!Enum.TryParse<VehicleType>(vehicleTypeSelection, out var vehicleType))
         {
             Console.WriteLine("Invalid vehicle type!");
@@ -121,8 +121,7 @@ internal class Program
         dbContext.Vehicles.Add(vehicle);
         dbContext.SaveChanges();
 
-        Console.WriteLine("\n\nAdded successfully...");
-        Console.ReadKey();
+        Console.WriteLine($"\n\nAdded successfully with id : {vehicle.Id}");
     }
 
     private static void AddNewTaxRecord(AppDbContext dbContext, Calculator calculator)
@@ -131,7 +130,13 @@ internal class Program
         Console.Write("Enter vehicle id: ");
         var vehicleId = Console.ReadLine();
 
-        var vehicle = dbContext.Vehicles.Find(Guid.Parse(vehicleId!));
+        if (!Guid.TryParse(vehicleId, out var vehicleIdAsGuid))
+        {
+            Console.WriteLine("Invalid vehicle id...");
+            return;
+        }
+
+        var vehicle = dbContext.Vehicles.Find(vehicleIdAsGuid);
 
         if (vehicle is null)
         {
@@ -158,7 +163,6 @@ internal class Program
         calculator.CalculateTax(vehicle, passageDates);
 
         Console.WriteLine("\n\nFinished...");
-        Console.ReadKey();
     }
 }
 

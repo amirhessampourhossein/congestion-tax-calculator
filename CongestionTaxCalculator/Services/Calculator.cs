@@ -23,7 +23,7 @@ public class Calculator(
 
         dates = FilterTollFreeDays(dates);
 
-         if (dates.Length == 0)
+        if (dates.Length == 0)
             return 0;
 
         var congestionTaxRules = congestionTaxRulesProvider.GetRules();
