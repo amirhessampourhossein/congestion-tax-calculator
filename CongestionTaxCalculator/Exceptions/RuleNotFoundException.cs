@@ -1,4 +1,4 @@
 ﻿namespace CongestionTaxCalculator.Exceptions;
 
 public class RuleNotFoundException()
-    : Exception("No rules found and tax amount cannot be calculated!");
+    : Exception("No rules found. Tax amount cannot be calculated!");

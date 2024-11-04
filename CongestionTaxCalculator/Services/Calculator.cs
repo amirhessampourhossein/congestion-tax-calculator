@@ -14,9 +14,9 @@ public class Calculator(
     private const int JulyMonthNumber = 7;
     private const decimal MaxDailyTaxAmount = 60m;
 
-    public decimal Calculate(Vehicle vehicle, DateTime[] dates)
+    public decimal Calculate(Vehicle vehicle, params DateTime[] dates)
     {
-        if (vehicle.IsTaxExmept())
+        if (vehicle.Type.IsTaxExmept())
             return 0;
 
         dates = FilterTollFreeDays(dates);
